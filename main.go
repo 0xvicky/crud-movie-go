@@ -1,102 +1,128 @@
 package main
 
 import (
-	"math/rand"
-	"encoding/json" //This library to render the data into json to send the data request
-	"fmt"           //Basic formatting methods to get the stuff in the terminal
-	"log"           //To log the data on the frontend of the application basically in the black screen
-	"net/http"      //To import the webserver facility
-	"strconv"
-
-	//To generate a random number
-	//To convert the datatypes "from" and "to" to the string represenation
-
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
 	"github.com/gorilla/mux"
 )
 
-type Director struct{
-firstname string `json:"firstname"`
-lastname string `json:"lastname"`
-}
-
 type Movie struct{
-id string `json:"id"`
-isbn string `json:"isbn"`
-title string `json:"title"`
-director *Director `json:"director"`
-}
-
-var movies []Movie//For now basically this is the storage we're using...and initially we're going to add some of the movies in it
-
-func getMovie(w http.ResponseWriter, r *http.Request){
-   w.Header().Set("Content-Type", "application/json")
-   params:=mux.Vars(r)
-   for _, item := range movies{
- if item.id == params[":id"]{
-  json.NewEncoder(w).Encode(item)
- }
+  ID string `json:"id"`
+  Title string `json:"title"`
+  ISBN string `json:"isbn"`
+  Director *Director `json:"director"`
 
 }
+
+type Director struct{
+  FirstName string `json:"firstname"`
+  LastName string `json:"lastName"`
 }
 
-func getMovies(w http.ResponseWriter, r *http.Request){
-  w.Header().Set("Content-Type", "application/json")
- json.NewEncoder(w).Encode(movies)
+var movies []Movie
+
+func getMovies(w http.ResponseWriter, r *http.Request){ //r is request you'll send through postman and w is response you'll get
+w.Header().Set("Content-Type", "application/json")
+json.NewEncoder(w).Encode(movies)
+
+//Printing to the terminal
+for index,movie := range movies{
+	jsonData, err := json.Marshal(movie) //convert movies slice in to json
+	if err !=nil {
+	http.Error(w,"Internal Server Error", http.StatusInternalServerError )
+	return
+	}
+
+	fmt.Println(index, string(jsonData))
+}
 }
 
 func deleteMovie(w http.ResponseWriter, r *http.Request){
- w.Header().Set("Content-Type", "application/json")
- params:=mux.Vars(r)
-
- for index, item := range movies{
-if item.id == params["id"]{
-movies = append(movies[:index], movies[index+1:]...)
-break
-}
- }
-
-}
-
-func createMovie(w http.ResponseWriter, r *http.Request){
 w.Header().Set("Content-Type", "application/json")
-var movie Movie
-_ =json.NewDecoder(r.Body).Decode(&movie) //To decode the json request into struct
-movie.id = strconv.Itoa(rand.Intn(1000000))
-movies = append(movies, movie)
-json.NewEncoder(w).Encode(movie) //Used to encode the struct in golang to the json
+params:=mux.Vars(r)
+for index, movie := range movies{
+	if movie.ID == params["id"]{
+		movies = append(movies[:index], movies[index+1:]...)
+		break
+	}
+}
+json.NewEncoder(w).Encode(movies)
+}
+
+func getMovie(w http.ResponseWriter, r *http.Request){
+	w.Header().Set("Content-Type", "application/json")
+	params:= mux.Vars(r)
+
+	for _, movie:= range movies{
+		if(movie.ID == params["id"]){
+			json.NewEncoder(w).Encode(movie) //returns the movie
+			break
+		}
+	}
+}
+
+func addMovie(w http.ResponseWriter, r *http.Request){
+w.Header().Set("Content-Type", "application/json")
+newMovie:= Movie{
+	ID: "3",
+	Title: "consensus algorithm such as Proof of Work or Proof of Stake.",
+	ISBN: "124444",
+	Director: &Director{
+    FirstName: "Vicky",
+	LastName: "Tyagi",
+	},
+}
+
+movies = append(movies, newMovie)
+
+json.NewEncoder(w).Encode(movies)
 }
 
 func updateMovie(w http.ResponseWriter, r *http.Request){
 w.Header().Set("Content-Type", "application/json")
-params:=mux.Vars(r)
-
-for index, item := range movies {
-if item.id == params["id"]{
-movies = append(movies[:index], movies[index+1:]...)
-
-var movie Movie
-_ = json.NewDecoder(r.Body).Decode(&movie)
-movie.id = params["id"]
-movies = append(movies, movie)
-json.NewEncoder(w).Encode(movie)
+params:=mux.Vars(r);
+for idx, movie := range movies{
+	if(movie.ID == params["id"]){
+     movies[idx].Title="Modular Blockchain in Go"
+	 break
+	}
 }
-}
+json.NewEncoder(w).Encode(movies)
 }
 
 func main(){
-r:=mux.NewRouter() //returns a new router instance
+r:=mux.NewRouter() //mux router initialised !!
 
-movies = append(movies,Movie{id:"1", isbn:"1234", title:"Armageddon", director:&Director{firstname: "Vicky", lastname: "Tyagi"}})
-movies = append(movies,Movie{id:"2", isbn:"123442", title:"Armageddon II", director:&Director{firstname: "John", lastname: "Doe"}})
+movies = append(movies, Movie{
+	ID:"1",
+	Title: "Blockchain in Go",
+	ISBN:"144232",
+	Director: &Director{
+		FirstName: "Vivek",
+		LastName: "Tyagi",
+	},
+})
 
+movies = append(movies, Movie{
+	ID:"2",
+	Title: "Implementing Lightning wallet in Go",
+	ISBN:"66632",
+	Director: &Director{
+		FirstName: "Vivek",
+		LastName: "T",
+	},
+})
 
-r.HandleFunc("/movies", getMovies).Methods("GET")
-r.HandleFunc("/movies/{id}", getMovie).Methods("GET")
-r.HandleFunc("/movies", createMovie).Methods("POST")
-r.HandleFunc("/movies/{id}",updateMovie).Methods("UPDATE")
-r.HandleFunc("/movies/{id}", deleteMovie).Methods("DELETE")
+r.HandleFunc("/",getMovies).Methods("GET")  //get movies
+r.HandleFunc("/movies/{id}",getMovie).Methods("GET") //get a specific movie
+r.HandleFunc("/movies", addMovie).Methods("POST") //add a movie
+r.HandleFunc("/movies/{id}", updateMovie).Methods("PUT")// update a movie
+r.HandleFunc("/movies/{id}", deleteMovie).Methods("DELETE") //delete a movie
 
 fmt.Printf("Starting server at port:8000\n")
-log.Fatal(http.ListenAndServe(":8000",r))
+log.Fatal(http.ListenAndServe(":8000",r))//first arg setup the port at 8000 and serve it, and then r is used to handle incoming request
+//log.fatal() is used to handle all type of error
 
 }
