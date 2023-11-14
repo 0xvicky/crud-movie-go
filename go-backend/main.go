@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+
 	"github.com/gorilla/mux"
 )
 
@@ -22,6 +23,22 @@ type Director struct{
 }
 
 var movies []Movie
+
+//To avoid CORS error by allowing request from any origin
+func corsMiddleware (next http.Handler) http.Handler{
+return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+w.Header().Set("Access-Control-Allow-Origin", "http://localhost:3000")
+w.Header().Set("Access-Control-Allow-Methods", "GET, POST, PUT, DELETE, OPTIONS")
+w.Header().Set("Access-Control-Allow-Headers", "Content-Type, Access-Control-Allow-Headers, Authorization, X-Requested-With")
+
+if(r.Method == http.MethodOptions){
+w.WriteHeader(http.StatusOK)
+return
+}
+next.ServeHTTP(w, r)
+})
+
+}
 
 func getMovies(w http.ResponseWriter, r *http.Request){ //r is request you'll send through postman and w is response you'll get
 w.Header().Set("Content-Type", "application/json")
@@ -94,6 +111,8 @@ json.NewEncoder(w).Encode(movies)
 
 func main(){
 r:=mux.NewRouter() //mux router initialised !!
+
+r.Use(corsMiddleware)
 
 movies = append(movies, Movie{
 	ID:"1",
