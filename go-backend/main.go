@@ -37,7 +37,6 @@ return
 }
 next.ServeHTTP(w, r)
 })
-
 }
 
 func getMovies(w http.ResponseWriter, r *http.Request){ //r is request you'll send through postman and w is response you'll get
