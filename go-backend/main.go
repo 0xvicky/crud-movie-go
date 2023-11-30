@@ -3,9 +3,11 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"math/rand"
 	"net/http"
+	"strconv"
 
+	"github.com/gorilla/handlers"
 	"github.com/gorilla/mux"
 )
 
@@ -80,18 +82,10 @@ func getMovie(w http.ResponseWriter, r *http.Request) {
 
 func addMovie(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
-	newMovie := Movie{
-		ID:    "3",
-		Title: "consensus algorithm such as Proof of Work or Proof of Stake.",
-		ISBN:  "124444",
-		Director: &Director{
-			FirstName: "Vicky",
-			LastName:  "Tyagi",
-		},
-	}
-
-	movies = append(movies, newMovie)
-
+	var movie Movie
+	_ = json.NewDecoder(r.Body).Decode(&movie)
+	movie.ID = strconv.Itoa(rand.Intn(100000))
+	movies = append(movies, movie)
 	json.NewEncoder(w).Encode(movies)
 }
 
@@ -110,7 +104,10 @@ func updateMovie(w http.ResponseWriter, r *http.Request) {
 func main() {
 	r := mux.NewRouter() //mux router initialised !!
 
-	r.Use(corsMiddleware)
+	// CORS middleware
+	headersOk := handlers.AllowedHeaders([]string{"X-Requested-With", "Content-Type", "Authorization"})
+	originsOk := handlers.AllowedOrigins([]string{"http://localhost:3000"})
+	methodsOk := handlers.AllowedMethods([]string{"GET", "HEAD", "POST", "PUT", "OPTIONS"})
 
 	movies = append(movies, Movie{
 		ID:    "1",
@@ -139,7 +136,7 @@ func main() {
 	r.HandleFunc("/movies/{id}", deleteMovie).Methods("DELETE") //delete a movie
 
 	fmt.Printf("Starting server at port:8080\n")
-	log.Fatal(http.ListenAndServe(":8080", r)) //first arg setup the port at 8000 and serve it, and then r is used to handle incoming request
+	http.ListenAndServe(":8080", handlers.CORS(originsOk, headersOk, methodsOk)(r)) //first arg setup the port at 8000 and serve it, and then r is used to handle incoming request
 	//log.fatal() is used to handle all type of error
 
 }

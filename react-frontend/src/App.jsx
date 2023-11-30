@@ -1,14 +1,14 @@
 import React, {useEffect, useState} from "react";
 import "./App.css";
 import MovieById from "./components/MovieById";
-import AddMovie from "./AddMovie";
+import AddMovie from "./components/AddMovie";
 
 function App() {
   const [movies, setMovies] = useState([]);
   const [resData, setResData] = useState();
 
   const getMovies = async () => {
-    const res = await fetch("http://192.168.1.11:8080/");
+    const res = await fetch("http://localhost:8080/");
     const data = await res?.json();
     console.log(data);
     setMovies(data);

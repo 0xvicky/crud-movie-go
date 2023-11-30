@@ -5,7 +5,7 @@ const MovieById = ({setData}) => {
 
   const getMovie = async () => {
     try {
-      const res = await fetch("http://192.168.1.11:8080/movies/1");
+      const res = await fetch(`http://localhost:8080/movies/${id}`);
       const data = await res?.json();
       console.log(data);
       //   console.log(get);
