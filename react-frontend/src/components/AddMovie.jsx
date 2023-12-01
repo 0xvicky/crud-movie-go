@@ -1,6 +1,6 @@
 import React, {useState} from "react";
 
-const AddMovie = () => {
+const AddMovie = ({updateFunction}) => {
   const [movie, setMovie] = useState({
     title: "",
     isbn: "",
@@ -22,11 +22,12 @@ const AddMovie = () => {
       const newMovie = await fetch("http://localhost:8080/movies", options);
       const data = await newMovie.json();
       console.log(data);
+      updateFunction();
     } catch (error) {
       console.log(`Error occured:${error}`);
     }
   };
-  console.log(movie);
+  // console.log(movie);
   return (
     <div className='flex flex-col'>
       <input

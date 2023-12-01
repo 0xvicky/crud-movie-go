@@ -1,22 +1,25 @@
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useState, useReducer} from "react";
 import "./App.css";
 import MovieById from "./components/MovieById";
 import AddMovie from "./components/AddMovie";
+import MovieTable from "./components/MovieTable";
 
 function App() {
   const [movies, setMovies] = useState([]);
   const [resData, setResData] = useState();
 
+  const [reducerVal, forceUpdate] = useReducer(x => x + 1);
+  const [redVal_2, forceUpdate_2] = useReducer(x => x + 1);
   const getMovies = async () => {
     const res = await fetch("http://localhost:8080/");
     const data = await res?.json();
-    console.log(data);
+    // console.log(data);
     setMovies(data);
   };
 
   useEffect(() => {
     getMovies();
-  }, []);
+  }, [reducerVal, redVal_2]);
 
   return (
     <div className='App'>
@@ -26,37 +29,13 @@ function App() {
           <div className='bg-purple-100 w-1/2'>
             {" "}
             <MovieById setData={setResData} />
-            <AddMovie />
+            <AddMovie updateFunction={forceUpdate_2} />
           </div>
 
-          <div className='bg-green-100 w-1/2'>
-            {movies.length !== 0 && (
-              <table>
-                <thead>
-                  <tr>
-                    <th>ID</th>
-                    <th>Title</th>
-                    <th>ISBN</th>
-                    <th>Director</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {movies.length !== 0 &&
-                    movies.map(item => (
-                      <tr key={item.id}>
-                        <td>{item.id}</td>
-                        <td>{item.title}</td>
-                        <td>{item.isbn}</td>
-                        <td>
-                          {item.director &&
-                            `${item.director.firstname} ${item.director.lastName}`}
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            )}
-          </div>
+          <MovieTable
+            movies={movies && movies}
+            updateFunction={forceUpdate}
+          />
         </div>
         <div className='mx-auto'>{resData && JSON.stringify(resData)}</div>
       </div>
